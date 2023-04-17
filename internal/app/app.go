@@ -1,5 +1,9 @@
 package app
 
-func Run() {
+import (
+	"github.com/vanyaio/raketa-bot/internal/config"
+)
+
+func Run(cfg *config.Config) {
 
 }
