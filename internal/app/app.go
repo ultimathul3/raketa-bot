@@ -9,12 +9,12 @@ import (
 )
 
 func Run(cfg *config.Config) {
-	bot, err := tgbotapi.NewBotAPI(cfg.BotToken)
+	bot, err := tgbotapi.NewBotAPI(cfg.Bot.Token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bot.Debug = cfg.BotDebug
+	bot.Debug = cfg.Bot.Debug
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 

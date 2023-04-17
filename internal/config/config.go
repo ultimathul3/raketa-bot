@@ -5,8 +5,15 @@ import (
 )
 
 type Config struct {
-	BotToken string `env:"BOT_TOKEN"`
-	BotDebug bool   `env:"BOT_DEBUG"`
+	Bot struct {
+		Token string `env:"BOT_TOKEN"`
+		Debug bool   `env:"BOT_DEBUG"`
+	}
+
+	GRPC struct {
+		ServerHost string `env:"GRPC_SERVER_HOST"`
+		ServerPort uint8  `env:"GRPC_SERVER_PORT"`
+	}
 }
 
 func ReadEnvFile() (*Config, error) {
