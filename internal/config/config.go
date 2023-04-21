@@ -12,7 +12,7 @@ type Config struct {
 
 	GRPC struct {
 		ServerHost string `env:"GRPC_SERVER_HOST"`
-		ServerPort uint8  `env:"GRPC_SERVER_PORT"`
+		ServerPort uint16 `env:"GRPC_SERVER_PORT"`
 	}
 }
 
