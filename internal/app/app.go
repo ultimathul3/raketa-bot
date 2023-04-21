@@ -5,6 +5,10 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/vanyaio/raketa-bot/internal/config"
+	"github.com/vanyaio/raketa-bot/internal/handler"
+	"github.com/vanyaio/raketa-bot/internal/service"
+	"github.com/vanyaio/raketa-bot/internal/storage"
+	"github.com/vanyaio/raketa-bot/pkg/client"
 )
 
 func Run(cfg *config.Config) {
@@ -20,6 +24,13 @@ func Run(cfg *config.Config) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	// TODO: handle updates
-	// updates := bot.GetUpdatesChan(u)
+	client, err := client.NewGrpcClient(cfg.GRPC.ServerHost, cfg.GRPC.ServerPort)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storage := storage.NewStateStorage()
+	service := service.NewRaketaService(client)
+	handler := handler.NewHandler(service, bot, storage)
+	handler.HandleUpdates(u)
 }
