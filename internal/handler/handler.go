@@ -56,7 +56,6 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			err := h.srv.SignUp(context.Background(), userID)
 			if err != nil {
 				log.Println(err.Error())
-				continue
 			}
 			msg := tgbotapi.NewMessage(
 				chatID,
