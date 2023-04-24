@@ -9,24 +9,24 @@ import (
 
 const (
 	startCommand        = "/start"
-	createTaskCommand   = "Create task"
-	deleteTaskCommand   = "Delete task"
-	assignWorkerCommand = "Assign worker"
-	closeTaskCommand    = "Close task"
-	getOpenTasksCommand = "Get open tasks"
+	createTaskCommand   = "Create task ➕"
+	deleteTaskCommand   = "Delete task ➖"
+	assignWorkerCommand = "Assign worker 📃"
+	closeTaskCommand    = "Close task ✔"
+	getOpenTasksCommand = "Get open tasks 👨‍🔧"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton(createTaskCommand+" ➕"),
-		tgbotapi.NewKeyboardButton(deleteTaskCommand+" ➖"),
+		tgbotapi.NewKeyboardButton(createTaskCommand),
+		tgbotapi.NewKeyboardButton(deleteTaskCommand),
 	),
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton(getOpenTasksCommand+" 📃"),
-		tgbotapi.NewKeyboardButton(closeTaskCommand+" ✔"),
+		tgbotapi.NewKeyboardButton(getOpenTasksCommand),
+		tgbotapi.NewKeyboardButton(closeTaskCommand),
 	),
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton(assignWorkerCommand+" 👨‍🔧"),
+		tgbotapi.NewKeyboardButton(assignWorkerCommand),
 	),
 )
 
