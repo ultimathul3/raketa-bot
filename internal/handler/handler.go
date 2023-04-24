@@ -53,7 +53,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		chatID := update.Message.Chat.ID
 		text := update.Message.Text
 
-		// URL input
 		if h.storage.GetState(userID) == types.UrlInput {
 			if _, err := url.ParseRequestURI(text); err != nil {
 				msg := tgbotapi.NewMessage(chatID, invalidUrlMessage)
@@ -65,7 +64,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			continue
 		}
 
-		// /start handle
 		if text == startCommand {
 			err := h.srv.SignUp(ctx, userID)
 			if err != nil {
@@ -77,7 +75,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			)
 			msg.ReplyMarkup = menuKeyboard
 			h.bot.Send(msg)
-			// Create task handle
 		} else if strings.HasPrefix(text, createTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CreateTask(ctx, url)
@@ -90,7 +87,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
 				h.bot.Send(msg)
 			})
-			// Delete task handle
 		} else if strings.Contains(text, deleteTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.DeleteTask(ctx, url)
@@ -103,7 +99,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
 				h.bot.Send(msg)
 			})
-			// Assign worker handle
 			// TODO
 		} else if strings.Contains(text, assignWorkerCommand) {
 			err := h.srv.AssignUser(ctx, "url", userID)
@@ -113,7 +108,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			}
 			msg := tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
 			h.bot.Send(msg)
-			// Close task handle
 		} else if strings.Contains(text, closeTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CloseTask(ctx, url)
@@ -124,7 +118,6 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasClosedMessage)
 				h.bot.Send(msg)
 			})
-			// Get open tasks handle
 		} else if strings.Contains(text, getOpenTasksCommand) {
 			tasks, err := h.srv.GetOpenTasks(ctx)
 			if err != nil {
