@@ -14,16 +14,16 @@ import (
 )
 
 type Handler struct {
-	srv  service.Service
-	bot  *tgbotapi.BotAPI
-	strg storage.Storage
+	srv     service.Service
+	bot     *tgbotapi.BotAPI
+	storage storage.Storage
 }
 
 func NewHandler(srv service.Service, bot *tgbotapi.BotAPI, strg storage.Storage) *Handler {
 	return &Handler{
-		srv:  srv,
-		bot:  bot,
-		strg: strg,
+		srv:     srv,
+		bot:     bot,
+		storage: strg,
 	}
 }
 
@@ -40,14 +40,14 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 		text := update.Message.Text
 
 		// URL input
-		if h.strg.GetState(userID) == storage.UrlInput {
+		if h.storage.GetState(userID) == storage.UrlInput {
 			if _, err := url.ParseRequestURI(text); err != nil {
 				msg := tgbotapi.NewMessage(chatID, "Invalid URL")
 				h.bot.Send(msg)
 				continue
 			}
-			h.strg.GetCallback(userID, storage.UrlInput)(text)
-			h.strg.SetState(userID, storage.Menu, nil)
+			h.storage.GetCallback(userID, storage.UrlInput)(text)
+			h.storage.SetState(userID, storage.Menu, nil)
 			continue
 		}
 
@@ -65,7 +65,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			h.bot.Send(msg)
 			// Create task handle
 		} else if strings.HasPrefix(text, "Create task") {
-			h.strg.SetState(userID, storage.UrlInput, func(ctx ...any) {
+			h.storage.SetState(userID, storage.UrlInput, func(ctx ...any) {
 				url := ctx[0].(string)
 				err := h.srv.CreateTask(context.Background(), url)
 				if err != nil {
@@ -79,7 +79,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			})
 			// Delete task handle
 		} else if strings.Contains(text, "Delete task") {
-			h.strg.SetState(userID, storage.UrlInput, func(ctx ...any) {
+			h.storage.SetState(userID, storage.UrlInput, func(ctx ...any) {
 				url := ctx[0].(string)
 				err := h.srv.DeleteTask(context.Background(), url)
 				if err != nil {
@@ -103,7 +103,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			h.bot.Send(msg)
 			// Close task handle
 		} else if strings.Contains(text, "Close task") {
-			h.strg.SetState(userID, storage.UrlInput, func(ctx ...any) {
+			h.storage.SetState(userID, storage.UrlInput, func(ctx ...any) {
 				url := ctx[0].(string)
 				err := h.srv.CloseTask(context.Background(), url)
 				if err != nil {
@@ -130,7 +130,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			h.bot.Send(msg)
 		}
 
-		if h.strg.GetState(userID) == storage.UrlInput {
+		if h.storage.GetState(userID) == storage.UrlInput {
 			msg := tgbotapi.NewMessage(chatID, "Enter task URL")
 			h.bot.Send(msg)
 		}
