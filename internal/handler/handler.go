@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"log"
 
@@ -64,7 +63,8 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			continue
 		}
 
-		if text == startCommand {
+		switch text {
+		case startCommand:
 			err := h.srv.SignUp(ctx, userID)
 			var msg tgbotapi.MessageConfig
 			if err != nil {
@@ -78,7 +78,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg.ReplyMarkup = menuKeyboard
 			}
 			h.bot.Send(msg)
-		} else if strings.HasPrefix(text, createTaskCommand) {
+		case createTaskCommand:
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CreateTask(ctx, url)
 				if err != nil {
@@ -90,7 +90,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
 				h.bot.Send(msg)
 			})
-		} else if strings.Contains(text, deleteTaskCommand) {
+		case deleteTaskCommand:
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.DeleteTask(ctx, url)
 				if err != nil {
@@ -102,8 +102,8 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
 				h.bot.Send(msg)
 			})
+		case assignWorkerCommand:
 			// TODO
-		} else if strings.Contains(text, assignWorkerCommand) {
 			err := h.srv.AssignUser(ctx, "url", userID)
 			if err != nil {
 				log.Println(err.Error())
@@ -111,7 +111,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			}
 			msg := tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
 			h.bot.Send(msg)
-		} else if strings.Contains(text, closeTaskCommand) {
+		case closeTaskCommand:
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CloseTask(ctx, url)
 				if err != nil {
@@ -121,7 +121,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				msg := tgbotapi.NewMessage(chatID, taskWasClosedMessage)
 				h.bot.Send(msg)
 			})
-		} else if strings.Contains(text, getOpenTasksCommand) {
+		case getOpenTasksCommand:
 			tasks, err := h.srv.GetOpenTasks(ctx)
 			if err != nil {
 				log.Println(err.Error())
