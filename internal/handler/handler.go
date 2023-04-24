@@ -15,8 +15,8 @@ import (
 
 type storage interface {
 	GetState(ID int64) types.State
-	GetCallback(ID int64, state types.State) types.CallbackFunc
-	SetState(ID int64, state types.State, callback types.CallbackFunc)
+	GetCallback(ID int64, state types.State) types.Callback
+	SetState(ID int64, state types.State, callback types.Callback)
 }
 
 type Handler struct {
@@ -71,8 +71,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			h.bot.Send(msg)
 			// Create task handle
 		} else if strings.HasPrefix(text, "Create task") {
-			h.storage.SetState(userID, types.UrlInput, func(ctx ...any) {
-				url := ctx[0].(string)
+			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CreateTask(context.Background(), url)
 				if err != nil {
 					log.Println(err.Error())
@@ -85,8 +84,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			})
 			// Delete task handle
 		} else if strings.Contains(text, "Delete task") {
-			h.storage.SetState(userID, types.UrlInput, func(ctx ...any) {
-				url := ctx[0].(string)
+			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.DeleteTask(context.Background(), url)
 				if err != nil {
 					log.Println(err.Error())
@@ -109,8 +107,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			h.bot.Send(msg)
 			// Close task handle
 		} else if strings.Contains(text, "Close task") {
-			h.storage.SetState(userID, types.UrlInput, func(ctx ...any) {
-				url := ctx[0].(string)
+			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CloseTask(context.Background(), url)
 				if err != nil {
 					log.Println(err.Error())

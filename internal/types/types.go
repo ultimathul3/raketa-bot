@@ -7,4 +7,4 @@ const (
 	UrlInput
 )
 
-type CallbackFunc func(ctx ...any)
+type Callback func(string)
