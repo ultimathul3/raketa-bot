@@ -9,7 +9,7 @@ import (
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/vanyaio/raketa-bot/internal/service"
+	raketapb "github.com/vanyaio/raketa-backend/proto"
 	"github.com/vanyaio/raketa-bot/internal/types"
 )
 
@@ -19,13 +19,22 @@ type storage interface {
 	SetState(ID int64, state types.State, callback types.Callback)
 }
 
+type service interface {
+	SignUp(ctx context.Context, id int64) error
+	CreateTask(ctx context.Context, url string) error
+	DeleteTask(ctx context.Context, url string) error
+	AssignUser(ctx context.Context, url string, userID int64) error
+	CloseTask(ctx context.Context, url string) error
+	GetOpenTasks(ctx context.Context) ([]*raketapb.Task, error)
+}
+
 type Handler struct {
-	srv     service.Service
+	srv     service
 	bot     *tgbotapi.BotAPI
 	storage storage
 }
 
-func NewHandler(srv service.Service, bot *tgbotapi.BotAPI, storage storage) *Handler {
+func NewHandler(srv service, bot *tgbotapi.BotAPI, storage storage) *Handler {
 	return &Handler{
 		srv:     srv,
 		bot:     bot,

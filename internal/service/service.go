@@ -7,15 +7,6 @@ import (
 	raketapb "github.com/vanyaio/raketa-backend/proto"
 )
 
-type Service interface {
-	SignUp(ctx context.Context, id int64) error
-	CreateTask(ctx context.Context, url string) error
-	DeleteTask(ctx context.Context, url string) error
-	AssignUser(ctx context.Context, url string, userID int64) error
-	CloseTask(ctx context.Context, url string) error
-	GetOpenTasks(ctx context.Context) ([]*raketapb.Task, error)
-}
-
 type RaketaService struct {
 	client raketapb.RaketaServiceClient
 }
