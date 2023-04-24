@@ -66,14 +66,17 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 
 		if text == startCommand {
 			err := h.srv.SignUp(ctx, userID)
+			var msg tgbotapi.MessageConfig
 			if err != nil {
 				log.Println(err.Error())
+				msg = tgbotapi.NewMessage(chatID, err.Error())
+			} else {
+				msg = tgbotapi.NewMessage(
+					chatID,
+					fmt.Sprintf(userSignedUpMessage, userID),
+				)
+				msg.ReplyMarkup = menuKeyboard
 			}
-			msg := tgbotapi.NewMessage(
-				chatID,
-				fmt.Sprintf(userSignedUpMessage, userID),
-			)
-			msg.ReplyMarkup = menuKeyboard
 			h.bot.Send(msg)
 		} else if strings.HasPrefix(text, createTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
