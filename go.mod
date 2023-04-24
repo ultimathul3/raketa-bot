@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/ilyakaznacheev/cleanenv v1.4.2
-	github.com/vanyaio/raketa-backend v0.0.0-20230421080211-18df44714f16
+	github.com/vanyaio/raketa-backend v0.0.0-20230421114749-3a68835047ff
 	google.golang.org/grpc v1.54.0
 )
 

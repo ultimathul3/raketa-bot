@@ -9,7 +9,6 @@ import (
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	raketapb "github.com/vanyaio/raketa-backend/proto"
 	"github.com/vanyaio/raketa-bot/internal/types"
 )
 
@@ -25,7 +24,7 @@ type service interface {
 	DeleteTask(ctx context.Context, url string) error
 	AssignUser(ctx context.Context, url string, userID int64) error
 	CloseTask(ctx context.Context, url string) error
-	GetOpenTasks(ctx context.Context) ([]*raketapb.Task, error)
+	GetOpenTasks(ctx context.Context) ([]types.Task, error)
 }
 
 type Handler struct {

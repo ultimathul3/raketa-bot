@@ -1,10 +1,16 @@
 package types
 
-type State int64
+type Status string
 
-const (
-	Menu State = iota
-	UrlInput
+var (
+	Open     Status = "open"
+	Closed   Status = "closed"
+	Declined Status = "declined"
+	Unknown  Status = "unknown"
 )
 
-type Callback func(string)
+type Task struct {
+	Url    string
+	Status Status
+	UserID int64
+}

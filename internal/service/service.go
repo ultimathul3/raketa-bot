@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	raketapb "github.com/vanyaio/raketa-backend/proto"
+	"github.com/vanyaio/raketa-bot/internal/types"
 )
 
 type RaketaService struct {
@@ -48,7 +49,30 @@ func (r *RaketaService) CloseTask(ctx context.Context, url string) error {
 	return err
 }
 
-func (r *RaketaService) GetOpenTasks(ctx context.Context) ([]*raketapb.Task, error) {
+func (r *RaketaService) GetOpenTasks(ctx context.Context) ([]types.Task, error) {
+	var tasks []types.Task
 	response, err := r.client.GetOpenTasks(ctx, &raketapb.GetOpenTasksRequest{})
-	return response.Tasks, err
+
+	for _, task := range response.Tasks {
+		tasks = append(tasks, types.Task{
+			Url:    task.Url,
+			Status: convertProtoStatusToTypes(task.Status),
+			UserID: task.UserId,
+		})
+	}
+
+	return tasks, err
+}
+
+func convertProtoStatusToTypes(status raketapb.Task_Status) types.Status {
+	switch status {
+	case raketapb.Task_OPEN:
+		return types.Open
+	case raketapb.Task_CLOSED:
+		return types.Closed
+	case raketapb.Task_DECLINED:
+		return types.Declined
+	default:
+		return types.Unknown
+	}
 }

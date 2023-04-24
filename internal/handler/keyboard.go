@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	raketapb "github.com/vanyaio/raketa-backend/proto"
+	"github.com/vanyaio/raketa-bot/internal/types"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -21,7 +21,7 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
-func NewTasksKeyboard(tasks []*raketapb.Task) tgbotapi.InlineKeyboardMarkup {
+func NewTasksKeyboard(tasks []types.Task) tgbotapi.InlineKeyboardMarkup {
 	var buttons [][]tgbotapi.InlineKeyboardButton
 
 	for i, task := range tasks {
