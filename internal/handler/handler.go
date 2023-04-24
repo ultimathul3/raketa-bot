@@ -56,7 +56,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		// URL input
 		if h.storage.GetState(userID) == types.UrlInput {
 			if _, err := url.ParseRequestURI(text); err != nil {
-				msg := tgbotapi.NewMessage(chatID, "Invalid URL")
+				msg := tgbotapi.NewMessage(chatID, invalidUrlMessage)
 				h.bot.Send(msg)
 				continue
 			}
@@ -66,66 +66,66 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		}
 
 		// /start handle
-		if text == "/start" {
+		if text == startCommand {
 			err := h.srv.SignUp(ctx, userID)
 			if err != nil {
 				log.Println(err.Error())
 			}
 			msg := tgbotapi.NewMessage(
 				chatID,
-				fmt.Sprintf("User with id '%d' signed up", userID),
+				fmt.Sprintf(userSignedUpMessage, userID),
 			)
 			msg.ReplyMarkup = menuKeyboard
 			h.bot.Send(msg)
 			// Create task handle
-		} else if strings.HasPrefix(text, "Create task") {
+		} else if strings.HasPrefix(text, createTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CreateTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
-					msg := tgbotapi.NewMessage(chatID, "Task already exists")
+					msg := tgbotapi.NewMessage(chatID, taskAlreadyExistsMessage)
 					h.bot.Send(msg)
 					return
 				}
-				msg := tgbotapi.NewMessage(chatID, "Task was created")
+				msg := tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
 				h.bot.Send(msg)
 			})
 			// Delete task handle
-		} else if strings.Contains(text, "Delete task") {
+		} else if strings.Contains(text, deleteTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.DeleteTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
-					msg := tgbotapi.NewMessage(chatID, "Task not found")
+					msg := tgbotapi.NewMessage(chatID, taskNotFoundMessage)
 					h.bot.Send(msg)
 					return
 				}
-				msg := tgbotapi.NewMessage(chatID, "Task was deleted")
+				msg := tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
 				h.bot.Send(msg)
 			})
 			// Assign worker handle
 			// TODO
-		} else if strings.Contains(text, "Assign worker") {
+		} else if strings.Contains(text, assignWorkerCommand) {
 			err := h.srv.AssignUser(ctx, "url", userID)
 			if err != nil {
 				log.Println(err.Error())
 				continue
 			}
-			msg := tgbotapi.NewMessage(chatID, "Worker was assigned")
+			msg := tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
 			h.bot.Send(msg)
 			// Close task handle
-		} else if strings.Contains(text, "Close task") {
+		} else if strings.Contains(text, closeTaskCommand) {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
 				err := h.srv.CloseTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
 					return
 				}
-				msg := tgbotapi.NewMessage(chatID, "Task was closed")
+				msg := tgbotapi.NewMessage(chatID, taskWasClosedMessage)
 				h.bot.Send(msg)
 			})
 			// Get open tasks handle
-		} else if strings.Contains(text, "Get open tasks") {
+		} else if strings.Contains(text, getOpenTasksCommand) {
 			tasks, err := h.srv.GetOpenTasks(ctx)
 			if err != nil {
 				log.Println(err.Error())
@@ -133,16 +133,16 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			}
 			var msg tgbotapi.MessageConfig
 			if tasks == nil {
-				msg = tgbotapi.NewMessage(chatID, "Empty tasks list")
+				msg = tgbotapi.NewMessage(chatID, emptyTasksListMessage)
 			} else {
-				msg = tgbotapi.NewMessage(chatID, "Current open tasks:")
+				msg = tgbotapi.NewMessage(chatID, currentOpenTasksMessage)
 				msg.ReplyMarkup = NewTasksKeyboard(tasks)
 			}
 			h.bot.Send(msg)
 		}
 
 		if h.storage.GetState(userID) == types.UrlInput {
-			msg := tgbotapi.NewMessage(chatID, "Enter task URL")
+			msg := tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
 			h.bot.Send(msg)
 		}
 	}
