@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	raketapb "github.com/vanyaio/raketa-backend/proto"
 	"github.com/vanyaio/raketa-bot/internal/types"
@@ -19,8 +18,7 @@ func NewRaketaService(client raketapb.RaketaServiceClient) *RaketaService {
 }
 
 func (r *RaketaService) SignUp(ctx context.Context, id int64) error {
-	a, err := r.client.SignUp(ctx, &raketapb.SignUpRequest{Id: id})
-	fmt.Println(a, err.Error())
+	_, err := r.client.SignUp(ctx, &raketapb.SignUpRequest{Id: id})
 	return err
 }
 

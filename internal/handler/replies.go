@@ -12,4 +12,6 @@ const (
 	emptyTasksListMessage    = "Empty tasks list"
 	currentOpenTasksMessage  = "Current open tasks:"
 	enterTaskUrlMessage      = "Enter task URL"
+	enterUserIdMessage       = "Enter user ID"
+	invalidUserIdMessage     = "Invalid user ID"
 )
