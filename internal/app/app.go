@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -32,5 +33,5 @@ func Run(cfg *config.Config) {
 	storage := storage.NewStateStorage()
 	service := service.NewRaketaService(client)
 	handler := handler.NewHandler(service, bot, storage)
-	handler.HandleUpdates(u)
+	handler.HandleUpdates(context.Background(), u)
 }

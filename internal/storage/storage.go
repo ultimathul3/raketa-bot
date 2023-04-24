@@ -21,7 +21,7 @@ func (s *StateStorage) GetState(ID int64) types.State {
 	return s.storage[ID].state
 }
 
-func (s *StateStorage) GetCallback(ID int64, state types.State) types.Callback {
+func (s *StateStorage) GetCallback(ID int64) types.Callback {
 	return s.storage[ID].callback
 }
 

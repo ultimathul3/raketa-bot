@@ -15,7 +15,7 @@ import (
 
 type storage interface {
 	GetState(ID int64) types.State
-	GetCallback(ID int64, state types.State) types.Callback
+	GetCallback(ID int64) types.Callback
 	SetState(ID int64, state types.State, callback types.Callback)
 }
 
@@ -33,7 +33,7 @@ func NewHandler(srv service.Service, bot *tgbotapi.BotAPI, storage storage) *Han
 	}
 }
 
-func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
+func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfig) {
 	updates := h.bot.GetUpdatesChan(config)
 
 	for update := range updates {
@@ -52,14 +52,14 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 				h.bot.Send(msg)
 				continue
 			}
-			h.storage.GetCallback(userID, types.UrlInput)(text)
+			h.storage.GetCallback(userID)(text)
 			h.storage.SetState(userID, types.Menu, nil)
 			continue
 		}
 
 		// /start handle
 		if text == "/start" {
-			err := h.srv.SignUp(context.Background(), userID)
+			err := h.srv.SignUp(ctx, userID)
 			if err != nil {
 				log.Println(err.Error())
 			}
@@ -72,7 +72,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			// Create task handle
 		} else if strings.HasPrefix(text, "Create task") {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				err := h.srv.CreateTask(context.Background(), url)
+				err := h.srv.CreateTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
 					msg := tgbotapi.NewMessage(chatID, "Task already exists")
@@ -85,7 +85,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			// Delete task handle
 		} else if strings.Contains(text, "Delete task") {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				err := h.srv.DeleteTask(context.Background(), url)
+				err := h.srv.DeleteTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
 					msg := tgbotapi.NewMessage(chatID, "Task not found")
@@ -98,7 +98,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			// Assign worker handle
 			// TODO
 		} else if strings.Contains(text, "Assign worker") {
-			err := h.srv.AssignUser(context.Background(), "url", userID)
+			err := h.srv.AssignUser(ctx, "url", userID)
 			if err != nil {
 				log.Println(err.Error())
 				continue
@@ -108,7 +108,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			// Close task handle
 		} else if strings.Contains(text, "Close task") {
 			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				err := h.srv.CloseTask(context.Background(), url)
+				err := h.srv.CloseTask(ctx, url)
 				if err != nil {
 					log.Println(err.Error())
 					return
@@ -118,7 +118,7 @@ func (h *Handler) HandleUpdates(config tgbotapi.UpdateConfig) {
 			})
 			// Get open tasks handle
 		} else if strings.Contains(text, "Get open tasks") {
-			tasks, err := h.srv.GetOpenTasks(context.Background())
+			tasks, err := h.srv.GetOpenTasks(ctx)
 			if err != nil {
 				log.Println(err.Error())
 				continue
