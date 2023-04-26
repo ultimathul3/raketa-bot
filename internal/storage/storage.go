@@ -2,32 +2,50 @@ package storage
 
 import "github.com/vanyaio/raketa-bot/internal/types"
 
-type stateInfo struct {
-	state    types.State
-	callback types.Callback
+type stateWithData struct {
+	state types.State
+	url   string
+	id    int64
 }
 
-type StateStorage struct {
-	storage map[int64]stateInfo
+type StateStorageWithData struct {
+	storage map[int64]stateWithData
 }
 
-func NewStateStorage() *StateStorage {
-	return &StateStorage{
-		storage: make(map[int64]stateInfo),
+func NewStateStorageWithData() *StateStorageWithData {
+	return &StateStorageWithData{
+		storage: make(map[int64]stateWithData),
 	}
 }
 
-func (s *StateStorage) GetState(ID int64) types.State {
-	return s.storage[ID].state
+func (s *StateStorageWithData) GetState(userID int64) types.State {
+	return s.storage[userID].state
 }
 
-func (s *StateStorage) GetCallback(ID int64) types.Callback {
-	return s.storage[ID].callback
+func (s *StateStorageWithData) GetURL(userID int64) string {
+	return s.storage[userID].url
 }
 
-func (s *StateStorage) SetState(ID int64, state types.State, callback types.Callback) {
-	s.storage[ID] = stateInfo{
-		state:    state,
-		callback: callback,
+func (s *StateStorageWithData) GetID(userID int64) int64 {
+	return s.storage[userID].id
+}
+
+func (s *StateStorageWithData) SetState(userID int64, state types.State) {
+	s.storage[userID] = stateWithData{
+		state: state,
+	}
+}
+
+func (s *StateStorageWithData) SetStateWithID(userID int64, state types.State, id int64) {
+	s.storage[userID] = stateWithData{
+		state: state,
+		id:    id,
+	}
+}
+
+func (s *StateStorageWithData) SetStateWithURL(userID int64, state types.State, url string) {
+	s.storage[userID] = stateWithData{
+		state: state,
+		url:   url,
 	}
 }

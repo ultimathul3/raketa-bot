@@ -13,9 +13,12 @@ import (
 )
 
 type storage interface {
-	GetState(ID int64) types.State
-	GetCallback(ID int64) types.Callback
-	SetState(ID int64, state types.State, callback types.Callback)
+	GetState(userID int64) types.State
+	GetURL(userID int64) string
+	GetID(userID int64) int64
+	SetState(userID int64, state types.State)
+	SetStateWithID(userID int64, state types.State, id int64)
+	SetStateWithURL(userID int64, state types.State, url string)
 }
 
 type service interface {
@@ -53,25 +56,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		chatID := update.Message.Chat.ID
 		text := update.Message.Text
 
-		switch h.storage.GetState(userID) {
-		case types.UrlInput:
-			if _, err := url.ParseRequestURI(text); err != nil {
-				msg := tgbotapi.NewMessage(chatID, invalidUrlMessage)
-				h.bot.Send(msg)
-				continue
-			}
-			h.storage.GetCallback(userID)(text)
-			continue
-
-		case types.IdInput:
-			if _, err := strconv.ParseInt(text, 10, 64); err != nil {
-				msg := tgbotapi.NewMessage(chatID, invalidUserIdMessage)
-				h.bot.Send(msg)
-				continue
-			}
-			h.storage.GetCallback(userID)(text)
-			continue
-		}
+		var msg tgbotapi.MessageConfig
 
 		switch text {
 		case startCommand:
@@ -79,69 +64,27 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				handleError(err, h.bot, chatID)
 				continue
 			}
-			msg := tgbotapi.NewMessage(
+			msg = tgbotapi.NewMessage(
 				chatID,
 				fmt.Sprintf(userSignedUpMessage, userID),
 			)
 			msg.ReplyMarkup = menuKeyboard
-			h.bot.Send(msg)
 
 		case createTaskCommand:
-			msg := tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-			h.bot.Send(msg)
-			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				if err := h.srv.CreateTask(ctx, url); err != nil {
-					handleError(err, h.bot, chatID)
-					return
-				}
-				msg := tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
-				h.bot.Send(msg)
-				h.storage.SetState(userID, types.Menu, nil)
-			})
+			msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
+			h.storage.SetState(userID, types.CreateTaskUrlInput)
 
 		case deleteTaskCommand:
-			msg := tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-			h.bot.Send(msg)
-			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				if err := h.srv.DeleteTask(ctx, url); err != nil {
-					handleError(err, h.bot, chatID)
-					return
-				}
-				msg := tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
-				h.bot.Send(msg)
-				h.storage.SetState(userID, types.Menu, nil)
-			})
+			msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
+			h.storage.SetState(userID, types.DeleteTaskUrlInput)
 
 		case assignWorkerCommand:
-			msg := tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-			h.bot.Send(msg)
-			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				msg := tgbotapi.NewMessage(chatID, enterUserIdMessage)
-				h.bot.Send(msg)
-				h.storage.SetState(userID, types.IdInput, func(idInput string) {
-					id, _ := strconv.ParseInt(idInput, 10, 64)
-					if err := h.srv.AssignUser(ctx, url, id); err != nil {
-						handleError(err, h.bot, chatID)
-						return
-					}
-					msg := tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
-					h.bot.Send(msg)
-					h.storage.SetState(userID, types.Menu, nil)
-				})
-			})
+			msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
+			h.storage.SetState(userID, types.AssignWorkerUrlInput)
 
 		case closeTaskCommand:
-			msg := tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-			h.bot.Send(msg)
-			h.storage.SetState(userID, types.UrlInput, func(url string) {
-				if err := h.srv.CloseTask(ctx, url); err != nil {
-					handleError(err, h.bot, chatID)
-					return
-				}
-				msg := tgbotapi.NewMessage(chatID, taskWasClosedMessage)
-				h.bot.Send(msg)
-				h.storage.SetState(userID, types.Menu, nil)
-			})
+			msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
+			h.storage.SetState(userID, types.CloseTaskUrlInput)
 
 		case getOpenTasksCommand:
 			tasks, err := h.srv.GetOpenTasks(ctx)
@@ -149,15 +92,75 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				handleError(err, h.bot, chatID)
 				continue
 			}
-			var msg tgbotapi.MessageConfig
 			if tasks == nil {
 				msg = tgbotapi.NewMessage(chatID, emptyTasksListMessage)
 			} else {
 				msg = tgbotapi.NewMessage(chatID, currentOpenTasksMessage)
 				msg.ReplyMarkup = NewTasksKeyboard(tasks)
 			}
-			h.bot.Send(msg)
+
+		default:
+			switch h.storage.GetState(userID) {
+			case types.CreateTaskUrlInput:
+				url, err := handleUrlInput(h.bot, chatID, text)
+				if err != nil {
+					continue
+				}
+				if err := h.srv.CreateTask(ctx, url); err != nil {
+					handleError(err, h.bot, chatID)
+					continue
+				}
+				msg = tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
+				h.storage.SetState(userID, types.Menu)
+
+			case types.DeleteTaskUrlInput:
+				url, err := handleUrlInput(h.bot, chatID, text)
+				if err != nil {
+					continue
+				}
+				if err := h.srv.DeleteTask(ctx, url); err != nil {
+					handleError(err, h.bot, chatID)
+					continue
+				}
+				msg = tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
+				h.storage.SetState(userID, types.Menu)
+
+			case types.AssignWorkerUrlInput:
+				url, err := handleUrlInput(h.bot, chatID, text)
+				if err != nil {
+					continue
+				}
+				msg = tgbotapi.NewMessage(chatID, enterUserIdMessage)
+				h.storage.SetStateWithURL(userID, types.AssignWorkerIdInput, url)
+
+			case types.AssignWorkerIdInput:
+				id, err := handleIdInput(h.bot, chatID, text)
+				if err != nil {
+					continue
+				}
+				url := h.storage.GetURL(userID)
+				if err := h.srv.AssignUser(ctx, url, id); err != nil {
+					handleError(err, h.bot, chatID)
+					continue
+				}
+				msg = tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
+				h.storage.SetState(userID, types.Menu)
+
+			case types.CloseTaskUrlInput:
+				url, err := handleUrlInput(h.bot, chatID, text)
+				if err != nil {
+					continue
+				}
+				if err := h.srv.CloseTask(ctx, url); err != nil {
+					handleError(err, h.bot, chatID)
+					continue
+				}
+				msg = tgbotapi.NewMessage(chatID, taskWasClosedMessage)
+				h.storage.SetState(userID, types.Menu)
+			}
 		}
+
+		h.bot.Send(msg)
 	}
 }
 
@@ -165,4 +168,24 @@ func handleError(err error, bot *tgbotapi.BotAPI, chatID int64) {
 	log.Println(err.Error())
 	msg := tgbotapi.NewMessage(chatID, err.Error())
 	bot.Send(msg)
+}
+
+func handleUrlInput(bot *tgbotapi.BotAPI, chatID int64, input string) (string, error) {
+	_, err := url.ParseRequestURI(input)
+	if err != nil {
+		msg := tgbotapi.NewMessage(chatID, invalidUrlMessage)
+		bot.Send(msg)
+	}
+
+	return input, err
+}
+
+func handleIdInput(bot *tgbotapi.BotAPI, chatID int64, input string) (int64, error) {
+	id, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		msg := tgbotapi.NewMessage(chatID, invalidUserIdMessage)
+		bot.Send(msg)
+	}
+
+	return id, err
 }

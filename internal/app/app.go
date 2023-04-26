@@ -30,7 +30,7 @@ func Run(cfg *config.Config) {
 		log.Fatal(err)
 	}
 
-	storage := storage.NewStateStorage()
+	storage := storage.NewStateStorageWithData()
 	service := service.NewRaketaService(client)
 	handler := handler.NewHandler(service, bot, storage)
 	handler.HandleUpdates(context.Background(), u)

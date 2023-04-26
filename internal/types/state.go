@@ -4,8 +4,9 @@ type State int64
 
 const (
 	Menu State = iota
-	UrlInput
-	IdInput
+	CreateTaskUrlInput
+	DeleteTaskUrlInput
+	AssignWorkerUrlInput
+	AssignWorkerIdInput
+	CloseTaskUrlInput
 )
-
-type Callback func(string)
