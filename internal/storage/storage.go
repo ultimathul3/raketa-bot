@@ -31,21 +31,21 @@ func (s *StateStorageWithData) GetID(userID int64) int64 {
 }
 
 func (s *StateStorageWithData) SetState(userID int64, state types.State) {
-	s.storage[userID] = stateWithData{
-		state: state,
-	}
+	stateWithData := s.storage[userID]
+	stateWithData.state = state
+	s.storage[userID] = stateWithData
 }
 
 func (s *StateStorageWithData) SetStateWithID(userID int64, state types.State, id int64) {
-	s.storage[userID] = stateWithData{
-		state: state,
-		id:    id,
-	}
+	stateWithData := s.storage[userID]
+	stateWithData.state = state
+	stateWithData.id = id
+	s.storage[userID] = stateWithData
 }
 
 func (s *StateStorageWithData) SetStateWithURL(userID int64, state types.State, url string) {
-	s.storage[userID] = stateWithData{
-		state: state,
-		url:   url,
-	}
+	stateWithData := s.storage[userID]
+	stateWithData.state = state
+	stateWithData.url = url
+	s.storage[userID] = stateWithData
 }
