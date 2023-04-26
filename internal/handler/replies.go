@@ -2,7 +2,7 @@ package handler
 
 const (
 	invalidUrlMessage        = "Invalid URL"
-	userSignedUpMessage      = "User with id '%d' signed up"
+	userSignedUpMessageFmt   = "User with id '%d' signed up"
 	taskAlreadyExistsMessage = "Task already exists"
 	taskWasCreatedMessage    = "Task was created"
 	taskNotFoundMessage      = "Task not found"

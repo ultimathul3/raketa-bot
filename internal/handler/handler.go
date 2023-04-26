@@ -64,10 +64,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				handleError(err, h.bot, chatID)
 				continue
 			}
-			msg = tgbotapi.NewMessage(
-				chatID,
-				fmt.Sprintf(userSignedUpMessage, userID),
-			)
+			msg = tgbotapi.NewMessage(chatID, getUserSignedUpMessage(userID))
 			msg.ReplyMarkup = menuKeyboard
 
 		case createTaskCommand:
@@ -100,6 +97,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			}
 
 		default:
+
 			switch h.storage.GetState(userID) {
 			case types.CreateTaskUrlInput:
 				url, err := handleUrlInput(h.bot, chatID, text)
@@ -188,4 +186,8 @@ func handleIdInput(bot *tgbotapi.BotAPI, chatID int64, input string) (int64, err
 	}
 
 	return id, err
+}
+
+func getUserSignedUpMessage(userID int64) string {
+	return fmt.Sprintf(userSignedUpMessageFmt, userID)
 }
