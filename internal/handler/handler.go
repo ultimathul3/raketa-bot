@@ -14,11 +14,9 @@ import (
 
 type storage interface {
 	GetState(userID int64) types.State
-	GetURL(userID int64) string
-	GetID(userID int64) int64
+	GetData(userID int64, key string) any
 	SetState(userID int64, state types.State)
-	SetStateWithID(userID int64, state types.State, id int64)
-	SetStateWithURL(userID int64, state types.State, url string)
+	SetStateWithData(userID int64, state types.State, key string, data any)
 }
 
 type service interface {
@@ -55,6 +53,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		userID := update.Message.From.ID
 		chatID := update.Message.Chat.ID
 		text := update.Message.Text
+		state := h.storage.GetState(userID)
 
 		var msg tgbotapi.MessageConfig
 
@@ -98,7 +97,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 
 		default:
 
-			switch h.storage.GetState(userID) {
+			switch state {
 			case types.CreateTaskUrlInput:
 				url, err := handleUrlInput(h.bot, chatID, text)
 				if err != nil {
@@ -129,14 +128,14 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 					continue
 				}
 				msg = tgbotapi.NewMessage(chatID, enterUserIdMessage)
-				h.storage.SetStateWithURL(userID, types.AssignWorkerIdInput, url)
+				h.storage.SetStateWithData(userID, types.AssignWorkerIdInput, "url", url)
 
 			case types.AssignWorkerIdInput:
 				id, err := handleIdInput(h.bot, chatID, text)
 				if err != nil {
 					continue
 				}
-				url := h.storage.GetURL(userID)
+				url := h.storage.GetData(userID, "url").(string)
 				if err := h.srv.AssignUser(ctx, url, id); err != nil {
 					handleError(err, h.bot, chatID)
 					continue

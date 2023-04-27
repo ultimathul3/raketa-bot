@@ -4,8 +4,7 @@ import "github.com/vanyaio/raketa-bot/internal/types"
 
 type stateWithData struct {
 	state types.State
-	url   string
-	id    int64
+	data  map[string]any
 }
 
 type StateStorageWithData struct {
@@ -22,12 +21,8 @@ func (s *StateStorageWithData) GetState(userID int64) types.State {
 	return s.storage[userID].state
 }
 
-func (s *StateStorageWithData) GetURL(userID int64) string {
-	return s.storage[userID].url
-}
-
-func (s *StateStorageWithData) GetID(userID int64) int64 {
-	return s.storage[userID].id
+func (s *StateStorageWithData) GetData(userID int64, key string) any {
+	return s.storage[userID].data[key]
 }
 
 func (s *StateStorageWithData) SetState(userID int64, state types.State) {
@@ -36,16 +31,14 @@ func (s *StateStorageWithData) SetState(userID int64, state types.State) {
 	s.storage[userID] = stateWithData
 }
 
-func (s *StateStorageWithData) SetStateWithID(userID int64, state types.State, id int64) {
+func (s *StateStorageWithData) SetStateWithData(userID int64, state types.State, key string, value any) {
 	stateWithData := s.storage[userID]
 	stateWithData.state = state
-	stateWithData.id = id
-	s.storage[userID] = stateWithData
-}
 
-func (s *StateStorageWithData) SetStateWithURL(userID int64, state types.State, url string) {
-	stateWithData := s.storage[userID]
-	stateWithData.state = state
-	stateWithData.url = url
+	if stateWithData.data == nil {
+		stateWithData.data = make(map[string]any)
+	}
+	stateWithData.data[key] = value
+
 	s.storage[userID] = stateWithData
 }
