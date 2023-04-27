@@ -1,7 +1,6 @@
 package handler
 
 const (
-	invalidUrlMessage        = "Invalid URL"
 	userSignedUpMessageFmt   = "User with id '%d' signed up"
 	taskAlreadyExistsMessage = "Task already exists"
 	taskWasCreatedMessage    = "Task was created"
@@ -11,7 +10,14 @@ const (
 	taskWasClosedMessage     = "Task was closed"
 	emptyTasksListMessage    = "Empty tasks list"
 	currentOpenTasksMessage  = "Current open tasks:"
-	enterTaskUrlMessage      = "Enter task URL"
-	enterUserIdMessage       = "Enter user ID"
-	invalidUserIdMessage     = "Invalid user ID"
+)
+
+const (
+	enterTaskUrlMessage = "Enter task URL"
+	enterUserIdMessage  = "Enter user ID"
+)
+
+const (
+	invalidUrlMessage    = "invalid URL"
+	invalidUserIdMessage = "invalid user ID"
 )
