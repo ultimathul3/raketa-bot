@@ -106,7 +106,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
-			id, err := handleIdInput(h.bot, chatID, userInput)
+			id, err := h.handleIdInput(chatID, userInput)
 			if err != nil {
 				continue
 			}
@@ -201,11 +201,11 @@ func (h *Handler) handleUrlInput(chatID int64, input string) (string, error) {
 	return input, err
 }
 
-func handleIdInput(bot *tgbotapi.BotAPI, chatID int64, input string) (int64, error) {
+func (h *Handler) handleIdInput(chatID int64, input string) (int64, error) {
 	id, err := strconv.ParseInt(input, 10, 64)
 	if err != nil {
 		msg := tgbotapi.NewMessage(chatID, invalidUserIdMessage)
-		bot.Send(msg)
+		h.bot.Send(msg)
 	}
 
 	return id, err
