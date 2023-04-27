@@ -102,7 +102,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				continue
 			}
 			*msg = tgbotapi.NewMessage(chatID, enterUserIdMessage)
-			h.storage.SetStateWithData(userID, types.AssignWorkerIdInput, "url", url)
+			h.storage.SetStateWithData(userID, types.AssignWorkerIdInput, types.UrlData, url)
 
 		case types.AssignWorkerIdInput:
 			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
@@ -112,7 +112,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			if err != nil {
 				continue
 			}
-			url := h.storage.GetData(userID, "url").(string)
+			url := h.storage.GetData(userID, types.UrlData).(string)
 			if err := h.srv.AssignUser(ctx, url, id); err != nil {
 				h.sendError(err, chatID)
 				continue

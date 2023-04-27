@@ -2,7 +2,7 @@ package types
 
 type Status string
 
-var (
+const (
 	Open     Status = "open"
 	Closed   Status = "closed"
 	Declined Status = "declined"
@@ -14,3 +14,8 @@ type Task struct {
 	Status Status
 	UserID int64
 }
+
+const (
+	UrlData = "url"
+	IdData  = "id"
+)
