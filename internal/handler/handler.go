@@ -56,61 +56,49 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		chatID := update.Message.Chat.ID
 		userInput := update.Message.Text
 		message := tgbotapi.MessageConfig{}
+		var err error
 
 		state, ok := h.storage.GetState(userID)
 		if !ok {
-			defaultState := types.Menu
-			h.storage.SetState(userID, defaultState)
-			state = defaultState
+			state = types.Menu
+			h.storage.SetState(userID, state)
 		}
 
 		switch state {
 		case types.Menu:
-			msg, _, err := h.handleCommandInput(ctx, userInput, userID, chatID)
+			message, _, err = h.handleCommandInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 
 		case types.CreateTaskUrlInput:
-			msg, err := h.handleCreateTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleCreateTaskUrlInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 
 		case types.DeleteTaskUrlInput:
-			msg, err := h.handleDeleteTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleDeleteTaskUrlInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 
 		case types.AssignWorkerUrlInput:
-			msg, err := h.handleAssignWorkerUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleAssignWorkerUrlInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 
 		case types.AssignWorkerIdInput:
-			msg, err := h.handleAssignWorkerIdInput(ctx, userInput, userID, chatID)
+			message, err = h.handleAssignWorkerIdInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 
 		case types.CloseTaskUrlInput:
-			msg, err := h.handleCloseTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleCloseTaskUrlInput(ctx, userInput, userID, chatID)
 			if err != nil {
 				message = h.handleError(err, chatID)
-			} else {
-				message = msg
 			}
 		}
 
