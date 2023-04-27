@@ -28,6 +28,8 @@ type service interface {
 	GetOpenTasks(ctx context.Context) ([]types.Task, error)
 }
 
+type isCommandInput bool
+
 type Handler struct {
 	srv     service
 	bot     *tgbotapi.BotAPI
@@ -138,7 +140,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 	}
 }
 
-func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, chatID int64, msg *tgbotapi.MessageConfig) bool {
+func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, chatID int64, msg *tgbotapi.MessageConfig) isCommandInput {
 	switch input {
 	case startCommand:
 		if err := h.srv.SignUp(ctx, userID); err != nil {
