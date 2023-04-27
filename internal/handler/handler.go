@@ -58,11 +58,11 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 
 		switch state {
 		case types.Menu:
-			h.handleKeyboardInput(ctx, userInput, userID, chatID, msg)
+			h.handleCommandInput(ctx, userInput, userID, chatID, msg)
 			continue
 
 		case types.CreateTaskUrlInput:
-			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
+			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
 			url, err := h.handleUrlInput(chatID, userInput)
@@ -77,7 +77,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			h.storage.SetState(userID, types.Menu)
 
 		case types.DeleteTaskUrlInput:
-			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
+			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
 			url, err := h.handleUrlInput(chatID, userInput)
@@ -92,7 +92,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			h.storage.SetState(userID, types.Menu)
 
 		case types.AssignWorkerUrlInput:
-			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
+			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
 			url, err := h.handleUrlInput(chatID, userInput)
@@ -103,7 +103,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			h.storage.SetStateWithData(userID, types.AssignWorkerIdInput, "url", url)
 
 		case types.AssignWorkerIdInput:
-			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
+			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
 			id, err := h.handleIdInput(chatID, userInput)
@@ -119,7 +119,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			h.storage.SetState(userID, types.Menu)
 
 		case types.CloseTaskUrlInput:
-			if h.handleKeyboardInput(ctx, userInput, userID, chatID, msg) {
+			if h.handleCommandInput(ctx, userInput, userID, chatID, msg) {
 				continue
 			}
 			url, err := h.handleUrlInput(chatID, userInput)
@@ -138,7 +138,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 	}
 }
 
-func (h *Handler) handleKeyboardInput(ctx context.Context, input string, userID, chatID int64, msg *tgbotapi.MessageConfig) bool {
+func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, chatID int64, msg *tgbotapi.MessageConfig) bool {
 	switch input {
 	case startCommand:
 		if err := h.srv.SignUp(ctx, userID); err != nil {
