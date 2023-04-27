@@ -3,7 +3,7 @@ package storage
 import "github.com/vanyaio/raketa-bot/internal/types"
 
 type stateWithData struct {
-	state types.State
+	state *types.State
 	data  map[string]any
 }
 
@@ -18,7 +18,14 @@ func NewStateStorageWithData() *StateStorageWithData {
 }
 
 func (s *StateStorageWithData) GetState(userID int64) types.State {
-	return s.storage[userID].state
+	if s.storage[userID].state == nil {
+		stateWithData := s.storage[userID]
+		// default state
+		*stateWithData.state = types.Menu
+		s.storage[userID] = stateWithData
+	}
+
+	return *s.storage[userID].state
 }
 
 func (s *StateStorageWithData) GetData(userID int64, key string) any {
@@ -27,13 +34,13 @@ func (s *StateStorageWithData) GetData(userID int64, key string) any {
 
 func (s *StateStorageWithData) SetState(userID int64, state types.State) {
 	stateWithData := s.storage[userID]
-	stateWithData.state = state
+	*stateWithData.state = state
 	s.storage[userID] = stateWithData
 }
 
 func (s *StateStorageWithData) SetStateWithData(userID int64, state types.State, key string, value any) {
 	stateWithData := s.storage[userID]
-	stateWithData.state = state
+	*stateWithData.state = state
 
 	if stateWithData.data == nil {
 		stateWithData.data = make(map[string]any)
