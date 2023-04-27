@@ -16,8 +16,3 @@ const (
 	enterTaskUrlMessage = "Enter task URL"
 	enterUserIdMessage  = "Enter user ID"
 )
-
-const (
-	invalidUrlMessage    = "invalid URL"
-	invalidUserIdMessage = "invalid user ID"
-)

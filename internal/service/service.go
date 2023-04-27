@@ -65,12 +65,12 @@ func (r *RaketaService) GetOpenTasks(ctx context.Context) ([]types.Task, error) 
 func convertProtoStatusToTypes(status raketapb.Task_Status) types.Status {
 	switch status {
 	case raketapb.Task_OPEN:
-		return types.Open
+		return types.TaskOpen
 	case raketapb.Task_CLOSED:
-		return types.Closed
+		return types.TaskClosed
 	case raketapb.Task_DECLINED:
-		return types.Declined
+		return types.TaskDeclined
 	default:
-		return types.Unknown
+		return types.TaskUnknown
 	}
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -14,8 +13,8 @@ import (
 )
 
 type storage interface {
-	GetState(userID int64) types.State
-	GetData(userID int64, key string) any
+	GetState(userID int64) (types.State, bool)
+	GetData(userID int64, key string) (any, bool)
 	SetState(userID int64, state types.State)
 	SetStateWithData(userID int64, state types.State, key string, data any)
 }
@@ -56,8 +55,14 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 		userID := update.Message.From.ID
 		chatID := update.Message.Chat.ID
 		userInput := update.Message.Text
-		state := h.storage.GetState(userID)
 		msg := tgbotapi.MessageConfig{}
+
+		state, ok := h.storage.GetState(userID)
+		if !ok {
+			defaultState := types.Menu
+			h.storage.SetState(userID, defaultState)
+			state = defaultState
+		}
 
 		switch state {
 		case types.Menu:
@@ -179,8 +184,12 @@ func (h *Handler) handleAssignWorkerIdInput(ctx context.Context, input string, u
 		return err
 	}
 
-	url := h.storage.GetData(userID, types.UrlData).(string)
-	if err := h.srv.AssignUser(ctx, url, id); err != nil {
+	url, ok := h.storage.GetData(userID, types.UrlData)
+	if !ok {
+		return errGettingUrlFromStorage
+	}
+
+	if err := h.srv.AssignUser(ctx, url.(string), id); err != nil {
 		return err
 	}
 
@@ -266,7 +275,7 @@ func (h *Handler) handleError(err error, chatID int64, msg *tgbotapi.MessageConf
 func (h *Handler) handleUrlInput(chatID int64, input string) (string, error) {
 	_, err := url.ParseRequestURI(input)
 	if err != nil {
-		return "", errors.New(invalidUrlMessage)
+		return "", errInvalidUrlInput
 	}
 
 	return input, nil
@@ -275,7 +284,7 @@ func (h *Handler) handleUrlInput(chatID int64, input string) (string, error) {
 func (h *Handler) handleIdInput(chatID int64, input string) (int64, error) {
 	id, err := strconv.ParseInt(input, 10, 64)
 	if err != nil {
-		return 0, errors.New(invalidUserIdMessage)
+		return 0, errInvalidUserIdInput
 	}
 
 	return id, nil

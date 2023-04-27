@@ -9,4 +9,5 @@ const (
 	AssignWorkerUrlInput
 	AssignWorkerIdInput
 	CloseTaskUrlInput
+	StateUnknown
 )

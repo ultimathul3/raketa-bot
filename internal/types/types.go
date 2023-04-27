@@ -3,10 +3,10 @@ package types
 type Status string
 
 const (
-	Open     Status = "open"
-	Closed   Status = "closed"
-	Declined Status = "declined"
-	Unknown  Status = "unknown"
+	TaskOpen     Status = "open"
+	TaskClosed   Status = "closed"
+	TaskDeclined Status = "declined"
+	TaskUnknown  Status = "unknown"
 )
 
 type Task struct {
