@@ -20,6 +20,7 @@ func NewStateStorageWithData() *StateStorageWithData {
 func (s *StateStorageWithData) GetState(userID int64) types.State {
 	if s.storage[userID].state == nil {
 		stateWithData := s.storage[userID]
+		stateWithData.state = new(types.State)
 		// default state
 		*stateWithData.state = types.Menu
 		s.storage[userID] = stateWithData
