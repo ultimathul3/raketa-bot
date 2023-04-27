@@ -70,7 +70,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				continue
 			}
 			if err := h.srv.CreateTask(ctx, url); err != nil {
-				h.handleError(err, chatID)
+				h.sendError(err, chatID)
 				continue
 			}
 			*msg = tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
@@ -85,7 +85,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				continue
 			}
 			if err := h.srv.DeleteTask(ctx, url); err != nil {
-				h.handleError(err, chatID)
+				h.sendError(err, chatID)
 				continue
 			}
 			*msg = tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
@@ -112,7 +112,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			}
 			url := h.storage.GetData(userID, "url").(string)
 			if err := h.srv.AssignUser(ctx, url, id); err != nil {
-				h.handleError(err, chatID)
+				h.sendError(err, chatID)
 				continue
 			}
 			*msg = tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
@@ -127,7 +127,7 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 				continue
 			}
 			if err := h.srv.CloseTask(ctx, url); err != nil {
-				h.handleError(err, chatID)
+				h.sendError(err, chatID)
 				continue
 			}
 			*msg = tgbotapi.NewMessage(chatID, taskWasClosedMessage)
@@ -142,7 +142,7 @@ func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, 
 	switch input {
 	case startCommand:
 		if err := h.srv.SignUp(ctx, userID); err != nil {
-			h.handleError(err, chatID)
+			h.sendError(err, chatID)
 			return true
 		}
 		*msg = tgbotapi.NewMessage(chatID, getUserSignedUpMessage(userID))
@@ -167,7 +167,7 @@ func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, 
 	case getOpenTasksCommand:
 		tasks, err := h.srv.GetOpenTasks(ctx)
 		if err != nil {
-			h.handleError(err, chatID)
+			h.sendError(err, chatID)
 			return true
 		}
 		if tasks == nil {
@@ -185,7 +185,7 @@ func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, 
 	return true
 }
 
-func (h *Handler) handleError(err error, chatID int64) {
+func (h *Handler) sendError(err error, chatID int64) {
 	log.Println(err.Error())
 	msg := tgbotapi.NewMessage(chatID, err.Error())
 	h.bot.Send(msg)
