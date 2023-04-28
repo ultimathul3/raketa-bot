@@ -11,12 +11,12 @@ const (
 	startCommand        = "/start"
 	createTaskCommand   = "Create task ➕"
 	deleteTaskCommand   = "Delete task ➖"
-	assignWorkerCommand = "Assign worker 📃"
+	assignWorkerCommand = "Assign worker 👨‍🔧"
 	closeTaskCommand    = "Close task ✔"
-	getOpenTasksCommand = "Get open tasks 👨‍🔧"
+	getOpenTasksCommand = "Get unassigned tasks 📃"
 )
 
-var menuKeyboard = tgbotapi.NewReplyKeyboard(
+var adminMenuKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton(createTaskCommand),
 		tgbotapi.NewKeyboardButton(deleteTaskCommand),
@@ -30,6 +30,12 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
+var regularMenuKeyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton(getOpenTasksCommand),
+	),
+)
+
 func NewTasksKeyboard(tasks []types.Task) tgbotapi.InlineKeyboardMarkup {
 	var buttons [][]tgbotapi.InlineKeyboardButton
 
@@ -37,7 +43,7 @@ func NewTasksKeyboard(tasks []types.Task) tgbotapi.InlineKeyboardMarkup {
 		buttons = append(buttons,
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonURL(
-					fmt.Sprintf("Task %d", i+1),
+					fmt.Sprintf("Task %d (price: %d)", i+1, task.Price),
 					task.Url,
 				),
 			),

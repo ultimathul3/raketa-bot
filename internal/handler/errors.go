@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	errInvalidUrlInput       = errors.New("invalid URL")
-	errInvalidUserIdInput    = errors.New("invalid user ID")
+	errInvalidPriceInput     = errors.New("invalid price")
 	errGettingUrlFromStorage = errors.New("error getting url from storage")
+	errUnknownUserRole       = errors.New("unknown user role")
 )
