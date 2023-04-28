@@ -8,7 +8,7 @@ import (
 
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/vanyaio/raketa-bot/internal/types"
 )
 
@@ -20,23 +20,24 @@ type storage interface {
 }
 
 type service interface {
-	SignUp(ctx context.Context, id int64) error
+	SignUp(ctx context.Context, id int64, username string) error
 	CreateTask(ctx context.Context, url string) error
+	SetTaskPrice(ctx context.Context, url string, price uint64) error
 	DeleteTask(ctx context.Context, url string) error
-	AssignUser(ctx context.Context, url string, userID int64) error
+	AssignUser(ctx context.Context, url, username string) error
 	CloseTask(ctx context.Context, url string) error
-	GetOpenTasks(ctx context.Context) ([]types.Task, error)
+	GetUnassignTasks(ctx context.Context) ([]types.Task, error)
 }
 
 type isCommandInput bool
 
 type Handler struct {
 	srv     service
-	bot     *tgbotapi.BotAPI
+	bot     *tg.BotAPI
 	storage storage
 }
 
-func NewHandler(srv service, bot *tgbotapi.BotAPI, storage storage) *Handler {
+func NewHandler(srv service, bot *tg.BotAPI, storage storage) *Handler {
 	return &Handler{
 		srv:     srv,
 		bot:     bot,
@@ -44,7 +45,7 @@ func NewHandler(srv service, bot *tgbotapi.BotAPI, storage storage) *Handler {
 	}
 }
 
-func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfig) {
+func (h *Handler) HandleUpdates(ctx context.Context, config tg.UpdateConfig) {
 	updates := h.bot.GetUpdatesChan(config)
 
 	for update := range updates {
@@ -52,53 +53,57 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 			continue
 		}
 
-		userID := update.Message.From.ID
-		chatID := update.Message.Chat.ID
-		userInput := update.Message.Text
-		message := tgbotapi.MessageConfig{}
+		inputMessage := update.Message
+		message := tg.MessageConfig{}
 		var err error
 
-		state, ok := h.storage.GetState(userID)
+		state, ok := h.storage.GetState(inputMessage.From.ID)
 		if !ok {
 			state = types.Menu
-			h.storage.SetState(userID, state)
+			h.storage.SetState(inputMessage.From.ID, state)
 		}
 
 		switch state {
 		case types.Menu:
-			message, _, err = h.handleCommandInput(ctx, userInput, userID, chatID)
+			message, _, err = h.handleCommandInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 
 		case types.CreateTaskUrlInput:
-			message, err = h.handleCreateTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleCreateTaskUrlInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
+			}
+
+		case types.CreateTaskPriceInput:
+			message, err = h.handleCreateTaskPriceInput(ctx, inputMessage)
+			if err != nil {
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 
 		case types.DeleteTaskUrlInput:
-			message, err = h.handleDeleteTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleDeleteTaskUrlInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 
 		case types.AssignWorkerUrlInput:
-			message, err = h.handleAssignWorkerUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleAssignWorkerUrlInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 
-		case types.AssignWorkerIdInput:
-			message, err = h.handleAssignWorkerIdInput(ctx, userInput, userID, chatID)
+		case types.AssignWorkerUsernameInput:
+			message, err = h.handleAssignWorkerUsernameInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 
 		case types.CloseTaskUrlInput:
-			message, err = h.handleCloseTaskUrlInput(ctx, userInput, userID, chatID)
+			message, err = h.handleCloseTaskUrlInput(ctx, inputMessage)
 			if err != nil {
-				message = h.handleError(err, chatID)
+				message = h.handleError(err, inputMessage.Chat.ID)
 			}
 		}
 
@@ -108,179 +113,204 @@ func (h *Handler) HandleUpdates(ctx context.Context, config tgbotapi.UpdateConfi
 	}
 }
 
-func (h *Handler) handleCreateTaskUrlInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, error) {
-	msg, isCommandInput, err := h.handleCommandInput(ctx, input, userID, chatID)
+func (h *Handler) handleCreateTaskUrlInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 	if isCommandInput {
 		return msg, nil
 	}
 
-	url, err := h.handleUrlInput(chatID, input)
+	url, err := h.handleUrlInput(input.Text)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 
-	if err := h.srv.CreateTask(ctx, url); err != nil {
-		return tgbotapi.MessageConfig{}, err
-	}
-
-	msg = tgbotapi.NewMessage(chatID, taskWasCreatedMessage)
-	h.storage.SetState(userID, types.Menu)
+	msg = tg.NewMessage(input.Chat.ID, enterTaskPriceMessage)
+	h.storage.SetStateWithData(input.From.ID, types.CreateTaskPriceInput, types.UrlDataKey, url)
 
 	return msg, nil
 }
 
-func (h *Handler) handleDeleteTaskUrlInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, error) {
-	msg, isCommandInput, err := h.handleCommandInput(ctx, input, userID, chatID)
+func (h *Handler) handleCreateTaskPriceInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 	if isCommandInput {
 		return msg, nil
 	}
 
-	url, err := h.handleUrlInput(chatID, input)
+	price, err := h.handlePriceInput(input.Text)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
+	}
+
+	url, ok := h.storage.GetData(input.From.ID, types.UrlDataKey)
+	if !ok {
+		return tg.MessageConfig{}, errGettingUrlFromStorage
+	}
+	if err := h.srv.CreateTask(ctx, url.(string)); err != nil {
+		return tg.MessageConfig{}, err
+	}
+
+	if err := h.srv.SetTaskPrice(ctx, url.(string), price); err != nil {
+		return tg.MessageConfig{}, err
+	}
+
+	msg = tg.NewMessage(input.Chat.ID, taskWasCreatedMessage)
+	h.storage.SetState(input.From.ID, types.Menu)
+
+	return msg, nil
+}
+
+func (h *Handler) handleDeleteTaskUrlInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
+	if err != nil {
+		return tg.MessageConfig{}, err
+	}
+	if isCommandInput {
+		return msg, nil
+	}
+
+	url, err := h.handleUrlInput(input.Text)
+	if err != nil {
+		return tg.MessageConfig{}, err
 	}
 
 	if err := h.srv.DeleteTask(ctx, url); err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 
-	msg = tgbotapi.NewMessage(chatID, taskWasDeletedMessage)
-	h.storage.SetState(userID, types.Menu)
+	msg = tg.NewMessage(input.Chat.ID, taskWasDeletedMessage)
+	h.storage.SetState(input.From.ID, types.Menu)
 
 	return msg, nil
 }
 
-func (h *Handler) handleAssignWorkerUrlInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, error) {
-	msg, isCommandInput, err := h.handleCommandInput(ctx, input, userID, chatID)
+func (h *Handler) handleAssignWorkerUrlInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 	if isCommandInput {
 		return msg, nil
 	}
 
-	url, err := h.handleUrlInput(chatID, input)
+	url, err := h.handleUrlInput(input.Text)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 
-	msg = tgbotapi.NewMessage(chatID, enterUserIdMessage)
-	h.storage.SetStateWithData(userID, types.AssignWorkerIdInput, types.UrlData, url)
+	msg = tg.NewMessage(input.Chat.ID, enterUsernameMessage)
+	h.storage.SetStateWithData(input.From.ID, types.AssignWorkerUsernameInput, types.UrlDataKey, url)
 
 	return msg, nil
 }
 
-func (h *Handler) handleAssignWorkerIdInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, error) {
-	msg, isCommandInput, err := h.handleCommandInput(ctx, input, userID, chatID)
+func (h *Handler) handleAssignWorkerUsernameInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 	if isCommandInput {
 		return msg, nil
 	}
 
-	id, err := h.handleIdInput(chatID, input)
-	if err != nil {
-		return tgbotapi.MessageConfig{}, err
-	}
+	username := input.Text
 
-	url, ok := h.storage.GetData(userID, types.UrlData)
+	url, ok := h.storage.GetData(input.From.ID, types.UrlDataKey)
 	if !ok {
-		return tgbotapi.MessageConfig{}, errGettingUrlFromStorage
+		return tg.MessageConfig{}, errGettingUrlFromStorage
 	}
 
-	if err := h.srv.AssignUser(ctx, url.(string), id); err != nil {
-		return tgbotapi.MessageConfig{}, err
+	if err := h.srv.AssignUser(ctx, url.(string), username); err != nil {
+		return tg.MessageConfig{}, err
 	}
 
-	msg = tgbotapi.NewMessage(chatID, workerWasAssignedMessage)
-	h.storage.SetState(userID, types.Menu)
+	msg = tg.NewMessage(input.Chat.ID, workerWasAssignedMessage)
+	h.storage.SetState(input.From.ID, types.Menu)
 
 	return msg, nil
 }
 
-func (h *Handler) handleCloseTaskUrlInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, error) {
-	msg, isCommandInput, err := h.handleCommandInput(ctx, input, userID, chatID)
+func (h *Handler) handleCloseTaskUrlInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, error) {
+	msg, isCommandInput, err := h.handleCommandInput(ctx, input)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 	if isCommandInput {
 		return msg, nil
 	}
 
-	url, err := h.handleUrlInput(chatID, input)
+	url, err := h.handleUrlInput(input.Text)
 	if err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 
 	if err := h.srv.CloseTask(ctx, url); err != nil {
-		return tgbotapi.MessageConfig{}, err
+		return tg.MessageConfig{}, err
 	}
 
-	msg = tgbotapi.NewMessage(chatID, taskWasClosedMessage)
-	h.storage.SetState(userID, types.Menu)
+	msg = tg.NewMessage(input.Chat.ID, taskWasClosedMessage)
+	h.storage.SetState(input.From.ID, types.Menu)
 
 	return msg, nil
 }
 
-func (h *Handler) handleCommandInput(ctx context.Context, input string, userID, chatID int64) (tgbotapi.MessageConfig, isCommandInput, error) {
-	var msg tgbotapi.MessageConfig
+func (h *Handler) handleCommandInput(ctx context.Context, input *tg.Message) (tg.MessageConfig, isCommandInput, error) {
+	var msg tg.MessageConfig
 
-	switch input {
+	switch input.Text {
 	case startCommand:
-		if err := h.srv.SignUp(ctx, userID); err != nil {
-			return tgbotapi.MessageConfig{}, true, err
+		if err := h.srv.SignUp(ctx, input.From.ID, input.From.UserName); err != nil {
+			return tg.MessageConfig{}, true, err
 		}
-		msg = tgbotapi.NewMessage(chatID, getUserSignedUpMessage(userID))
+		msg = tg.NewMessage(input.Chat.ID, getUserSignedUpMessage(input.From.ID, input.From.UserName))
 		msg.ReplyMarkup = menuKeyboard
 
 	case createTaskCommand:
-		msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-		h.storage.SetState(userID, types.CreateTaskUrlInput)
+		msg = tg.NewMessage(input.Chat.ID, enterTaskUrlMessage)
+		h.storage.SetState(input.From.ID, types.CreateTaskUrlInput)
 
 	case deleteTaskCommand:
-		msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-		h.storage.SetState(userID, types.DeleteTaskUrlInput)
+		msg = tg.NewMessage(input.Chat.ID, enterTaskUrlMessage)
+		h.storage.SetState(input.From.ID, types.DeleteTaskUrlInput)
 
 	case assignWorkerCommand:
-		msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-		h.storage.SetState(userID, types.AssignWorkerUrlInput)
+		msg = tg.NewMessage(input.Chat.ID, enterTaskUrlMessage)
+		h.storage.SetState(input.From.ID, types.AssignWorkerUrlInput)
 
 	case closeTaskCommand:
-		msg = tgbotapi.NewMessage(chatID, enterTaskUrlMessage)
-		h.storage.SetState(userID, types.CloseTaskUrlInput)
+		msg = tg.NewMessage(input.Chat.ID, enterTaskUrlMessage)
+		h.storage.SetState(input.From.ID, types.CloseTaskUrlInput)
 
 	case getOpenTasksCommand:
-		tasks, err := h.srv.GetOpenTasks(ctx)
+		tasks, err := h.srv.GetUnassignTasks(ctx)
 		if err != nil {
-			return tgbotapi.MessageConfig{}, true, err
+			return tg.MessageConfig{}, true, err
 		}
 		if tasks == nil {
-			msg = tgbotapi.NewMessage(chatID, emptyTasksListMessage)
+			msg = tg.NewMessage(input.Chat.ID, emptyTasksListMessage)
 		} else {
-			msg = tgbotapi.NewMessage(chatID, currentOpenTasksMessage)
+			msg = tg.NewMessage(input.Chat.ID, currentOpenTasksMessage)
 			msg.ReplyMarkup = NewTasksKeyboard(tasks)
 		}
 
 	default:
-		return tgbotapi.MessageConfig{}, false, nil
+		return tg.MessageConfig{}, false, nil
 	}
 
 	return msg, true, nil
 }
 
-func (h *Handler) handleError(err error, chatID int64) tgbotapi.MessageConfig {
+func (h *Handler) handleError(err error, chatID int64) tg.MessageConfig {
 	log.Println(err.Error())
-	return tgbotapi.NewMessage(chatID, err.Error())
+	return tg.NewMessage(chatID, err.Error())
 }
 
-func (h *Handler) handleUrlInput(chatID int64, input string) (string, error) {
+func (h *Handler) handleUrlInput(input string) (string, error) {
 	_, err := url.ParseRequestURI(input)
 	if err != nil {
 		return "", errInvalidUrlInput
@@ -289,15 +319,15 @@ func (h *Handler) handleUrlInput(chatID int64, input string) (string, error) {
 	return input, nil
 }
 
-func (h *Handler) handleIdInput(chatID int64, input string) (int64, error) {
-	id, err := strconv.ParseInt(input, 10, 64)
+func (h *Handler) handlePriceInput(input string) (uint64, error) {
+	price, err := strconv.ParseUint(input, 10, 64)
 	if err != nil {
-		return 0, errInvalidUserIdInput
+		return 0, errInvalidPriceInput
 	}
 
-	return id, nil
+	return price, nil
 }
 
-func getUserSignedUpMessage(userID int64) string {
-	return fmt.Sprintf(userSignedUpMessageFmt, userID)
+func getUserSignedUpMessage(userID int64, username string) string {
+	return fmt.Sprintf(userSignedUpMessageFmt, userID, username)
 }

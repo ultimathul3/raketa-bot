@@ -17,8 +17,8 @@ func NewRaketaService(client raketapb.RaketaServiceClient) *RaketaService {
 	}
 }
 
-func (r *RaketaService) SignUp(ctx context.Context, id int64) error {
-	_, err := r.client.SignUp(ctx, &raketapb.SignUpRequest{Id: id})
+func (r *RaketaService) SignUp(ctx context.Context, id int64, username string) error {
+	_, err := r.client.SignUp(ctx, &raketapb.SignUpRequest{Id: id, Username: username})
 	return err
 }
 
@@ -27,15 +27,20 @@ func (r *RaketaService) CreateTask(ctx context.Context, url string) error {
 	return err
 }
 
+func (r *RaketaService) SetTaskPrice(ctx context.Context, url string, price uint64) error {
+	_, err := r.client.SetTaskPrice(ctx, &raketapb.SetTaskPriceRequest{Url: url, Price: price})
+	return err
+}
+
 func (r *RaketaService) DeleteTask(ctx context.Context, url string) error {
 	_, err := r.client.DeleteTask(ctx, &raketapb.DeleteTaskRequest{Url: url})
 	return err
 }
 
-func (r *RaketaService) AssignUser(ctx context.Context, url string, userID int64) error {
+func (r *RaketaService) AssignUser(ctx context.Context, url, username string) error {
 	_, err := r.client.AssignUser(ctx, &raketapb.AssignUserRequest{
-		Url:    url,
-		UserId: userID,
+		Url:      url,
+		Username: username,
 	})
 	return err
 }
@@ -47,15 +52,16 @@ func (r *RaketaService) CloseTask(ctx context.Context, url string) error {
 	return err
 }
 
-func (r *RaketaService) GetOpenTasks(ctx context.Context) ([]types.Task, error) {
+func (r *RaketaService) GetUnassignTasks(ctx context.Context) ([]types.Task, error) {
 	var tasks []types.Task
-	response, err := r.client.GetOpenTasks(ctx, &raketapb.GetOpenTasksRequest{})
+	response, err := r.client.GetUnassignTasks(ctx, &raketapb.GetUnassignTasksRequest{})
 
 	for _, task := range response.Tasks {
 		tasks = append(tasks, types.Task{
 			Url:    task.Url,
 			Status: convertProtoStatusToTypes(task.Status),
 			UserID: task.UserId,
+			Price:  task.Price,
 		})
 	}
 

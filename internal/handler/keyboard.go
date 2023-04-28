@@ -37,7 +37,7 @@ func NewTasksKeyboard(tasks []types.Task) tgbotapi.InlineKeyboardMarkup {
 		buttons = append(buttons,
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonURL(
-					fmt.Sprintf("Task %d", i+1),
+					fmt.Sprintf("Task %d (price: %d)", i+1, task.Price),
 					task.Url,
 				),
 			),

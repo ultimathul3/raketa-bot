@@ -1,7 +1,7 @@
 package handler
 
 const (
-	userSignedUpMessageFmt   = "User with id '%d' signed up"
+	userSignedUpMessageFmt   = "User with id '%d' and username '%s' signed up"
 	taskAlreadyExistsMessage = "Task already exists"
 	taskWasCreatedMessage    = "Task was created"
 	taskNotFoundMessage      = "Task not found"
@@ -13,6 +13,7 @@ const (
 )
 
 const (
-	enterTaskUrlMessage = "Enter task URL"
-	enterUserIdMessage  = "Enter user ID"
+	enterTaskUrlMessage   = "Enter task URL"
+	enterTaskPriceMessage = "Enter price"
+	enterUsernameMessage  = "Enter username"
 )

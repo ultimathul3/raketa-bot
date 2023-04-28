@@ -13,9 +13,10 @@ type Task struct {
 	Url    string
 	Status Status
 	UserID int64
+	Price  uint64
 }
 
 const (
-	UrlData = "url"
-	IdData  = "id"
+	UrlDataKey      = "url"
+	UsernameDataKey = "username"
 )

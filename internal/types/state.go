@@ -5,9 +5,10 @@ type State int64
 const (
 	Menu State = iota
 	CreateTaskUrlInput
+	CreateTaskPriceInput
 	DeleteTaskUrlInput
 	AssignWorkerUrlInput
-	AssignWorkerIdInput
+	AssignWorkerUsernameInput
 	CloseTaskUrlInput
 	StateUnknown
 )
