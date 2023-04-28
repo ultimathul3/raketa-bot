@@ -22,6 +22,14 @@ func (r *RaketaService) SignUp(ctx context.Context, id int64, username string) e
 	return err
 }
 
+func (r *RaketaService) GetUserRole(ctx context.Context, username string) (types.Role, error) {
+	response, err := r.client.GetUserRole(ctx, &raketapb.GetUserRoleRequest{Username: username})
+	if err != nil {
+		return types.UnknownRole, err
+	}
+	return convertProtoRoleToTypes(response.Role), err
+}
+
 func (r *RaketaService) CreateTask(ctx context.Context, url string) error {
 	_, err := r.client.CreateTask(ctx, &raketapb.CreateTaskRequest{Url: url})
 	return err
@@ -78,5 +86,16 @@ func convertProtoStatusToTypes(status raketapb.Task_Status) types.Status {
 		return types.TaskDeclined
 	default:
 		return types.TaskUnknown
+	}
+}
+
+func convertProtoRoleToTypes(role raketapb.GetUserRoleResponse_Role) types.Role {
+	switch role {
+	case raketapb.GetUserRoleResponse_ADMIN:
+		return types.AdminRole
+	case raketapb.GetUserRoleResponse_REGULAR:
+		return types.RegularRole
+	default:
+		return types.UnknownRole
 	}
 }

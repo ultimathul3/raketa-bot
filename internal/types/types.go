@@ -1,12 +1,19 @@
 package types
 
-type Status string
+type Status int
+type Role int
 
 const (
-	TaskOpen     Status = "open"
-	TaskClosed   Status = "closed"
-	TaskDeclined Status = "declined"
-	TaskUnknown  Status = "unknown"
+	TaskOpen Status = iota
+	TaskClosed
+	TaskDeclined
+	TaskUnknown
+)
+
+const (
+	AdminRole Role = iota
+	RegularRole
+	UnknownRole
 )
 
 type Task struct {

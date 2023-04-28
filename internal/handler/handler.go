@@ -21,6 +21,7 @@ type storage interface {
 
 type service interface {
 	SignUp(ctx context.Context, id int64, username string) error
+	GetUserRole(ctx context.Context, username string) (types.Role, error)
 	CreateTask(ctx context.Context, url string) error
 	SetTaskPrice(ctx context.Context, url string, price uint64) error
 	DeleteTask(ctx context.Context, url string) error
