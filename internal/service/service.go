@@ -27,7 +27,7 @@ func (r *RaketaService) GetUserRole(ctx context.Context, username string) (types
 	if err != nil {
 		return types.UnknownRole, err
 	}
-	return convertProtoRoleToTypes(response.Role), err
+	return convertProtoRoleToTypes(response.Role), nil
 }
 
 func (r *RaketaService) CreateTask(ctx context.Context, url string) error {
@@ -74,6 +74,16 @@ func (r *RaketaService) GetUnassignTasks(ctx context.Context) ([]types.Task, err
 	}
 
 	return tasks, err
+}
+
+func (r *RaketaService) GetUserStats(ctx context.Context, userID int64) (int64, error) {
+	response, err := r.client.GetUserStats(ctx, &raketapb.GetUserStatsRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		return -1, err
+	}
+	return response.ClosedTasksCount, nil
 }
 
 func convertProtoStatusToTypes(status raketapb.Task_Status) types.Status {
