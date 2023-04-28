@@ -11,9 +11,9 @@ const (
 	startCommand        = "/start"
 	createTaskCommand   = "Create task ➕"
 	deleteTaskCommand   = "Delete task ➖"
-	assignWorkerCommand = "Assign worker 📃"
+	assignWorkerCommand = "Assign worker 👨‍🔧"
 	closeTaskCommand    = "Close task ✔"
-	getOpenTasksCommand = "Get open tasks 👨‍🔧"
+	getOpenTasksCommand = "Get open tasks 📃"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
