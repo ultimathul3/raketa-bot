@@ -10,6 +10,7 @@ const (
 	taskWasClosedMessage     = "Task was closed"
 	emptyTasksListMessage    = "Empty tasks list"
 	currentOpenTasksMessage  = "Current open tasks:"
+	userStatsMessageFmt      = "Number of tasks you have completed: %d"
 )
 
 const (
