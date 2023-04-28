@@ -268,8 +268,19 @@ func (h *Handler) handleCommandInput(ctx context.Context, input *tg.Message) (tg
 		if err := h.srv.SignUp(ctx, input.From.ID, input.From.UserName); err != nil {
 			return tg.MessageConfig{}, true, err
 		}
+		role, err := h.srv.GetUserRole(ctx, input.From.UserName)
+		if err != nil {
+			return tg.MessageConfig{}, true, err
+		}
 		msg = tg.NewMessage(input.Chat.ID, getUserSignedUpMessage(input.From.ID, input.From.UserName))
-		msg.ReplyMarkup = menuKeyboard
+		switch role {
+		case types.AdminRole:
+			msg.ReplyMarkup = adminMenuKeyboard
+		case types.RegularRole:
+			msg.ReplyMarkup = regularMenuKeyboard
+		default:
+			return tg.MessageConfig{}, true, errUnknownUserRole
+		}
 
 	case createTaskCommand:
 		msg = tg.NewMessage(input.Chat.ID, enterTaskUrlMessage)
