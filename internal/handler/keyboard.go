@@ -14,6 +14,7 @@ const (
 	assignWorkerCommand = "Assign worker 👨‍🔧"
 	closeTaskCommand    = "Close task ✔"
 	getOpenTasksCommand = "Get unassigned tasks 📃"
+	getMyStatsCommand   = "Get my stats 🚀"
 )
 
 var adminMenuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -27,12 +28,14 @@ var adminMenuKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton(assignWorkerCommand),
+		tgbotapi.NewKeyboardButton(getMyStatsCommand),
 	),
 )
 
 var regularMenuKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton(getOpenTasksCommand),
+		tgbotapi.NewKeyboardButton(getMyStatsCommand),
 	),
 )
 

@@ -28,6 +28,7 @@ type service interface {
 	AssignUser(ctx context.Context, url, username string) error
 	CloseTask(ctx context.Context, url string) error
 	GetUnassignTasks(ctx context.Context) ([]types.Task, error)
+	GetUserStats(ctx context.Context, userID int64) (int64, error)
 }
 
 type isCommandInput bool
@@ -310,6 +311,13 @@ func (h *Handler) handleCommandInput(ctx context.Context, input *tg.Message) (tg
 			msg.ReplyMarkup = NewTasksKeyboard(tasks)
 		}
 
+	case getMyStatsCommand:
+		closedTasks, err := h.srv.GetUserStats(ctx, input.From.ID)
+		if err != nil {
+			return tg.MessageConfig{}, true, err
+		}
+		msg = tg.NewMessage(input.Chat.ID, getUserStatsMessage(closedTasks))
+
 	default:
 		return tg.MessageConfig{}, false, nil
 	}
@@ -342,4 +350,8 @@ func (h *Handler) handlePriceInput(input string) (uint64, error) {
 
 func getUserSignedUpMessage(userID int64, username string) string {
 	return fmt.Sprintf(userSignedUpMessageFmt, userID, username)
+}
+
+func getUserStatsMessage(closedTasks int64) string {
+	return fmt.Sprintf(userStatsMessageFmt, closedTasks)
 }
